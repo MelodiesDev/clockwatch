@@ -18,8 +18,7 @@ import {
   closedMixin,
   openedMixin
 } from "@/modules/sidebar.module";
-import { Avatar, ListItem } from "@mui/material";
-import { bgcolor } from "@mui/system";
+import { ListItem } from "@mui/material";
 import AccountMenu from "@/components/navigation/AccountMenu";
 
 export const drawerWidth = 240;
@@ -92,7 +91,7 @@ export default function Sidebar({ children }: React.PropsWithChildren<{}>) {
       >
         <DrawerHeader />
         <List>
-          {Object.entries(drawerItems).map(([text, icon], index) => (
+          {Object.entries(drawerItems).map(([text, icon]) => (
             <ListItem key={text} disablePadding sx={{ display: "block" }}>
               <ListItemButton
                 sx={{

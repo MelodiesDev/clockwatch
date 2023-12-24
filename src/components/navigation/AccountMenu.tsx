@@ -11,6 +11,10 @@ import Tooltip from "@mui/material/Tooltip";
 import Person from "@mui/icons-material/Person";
 import Settings from "@mui/icons-material/Settings";
 import Logout from "@mui/icons-material/Logout";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button, TextField } from "@mui/material";
+import { useState } from "react";
+import { ClockifyUser } from "@/types/ClockifyUser";
 
 export default function AccountMenu() {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -21,10 +25,62 @@ export default function AccountMenu() {
   const handleClose = () => {
     setAnchorEl(null);
   };
+
+  const queryClient = useQueryClient();
+
+  const { data: user } = useQuery<ClockifyUser>({
+    queryKey: ["clockify", "user"],
+    queryFn: () =>
+      fetch("https://api.clockify.me/api/v1/user", {
+        headers: {
+          "X-Api-Key": localStorage.getItem("apiKey") || ""
+        }
+      }).then((res) => res.json())
+  });
+
+  const [apiKey, setApiKey] = useState("");
+
+  async function handleAPIkey() {
+    localStorage.setItem("apiKey", apiKey);
+    await queryClient.invalidateQueries({ queryKey: ["clockify"] });
+    setApiKey("");
+  }
+
+  const hasApiKey = !!localStorage.getItem("apiKey");
+
+  const handleLogout = () => {
+    localStorage.removeItem("apiKey");
+    queryClient.invalidateQueries({ queryKey: ["clockify"] });
+    handleClose();
+  };
+
   return (
     <React.Fragment>
       <Box sx={{ display: "flex", alignItems: "center", textAlign: "center" }}>
-        <Typography sx={{ minWidth: 100 }}>KodingDev</Typography>
+        {!hasApiKey && (
+          <React.Fragment>
+            <TextField
+              variant="outlined"
+              size="small"
+              label="Enter your API key."
+              sx={{ mr: 2 }}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              type={"password"}
+            />
+            <Button
+              onClick={handleAPIkey}
+              sx={{ mr: 2 }}
+              variant="contained"
+              color="success"
+              disableElevation
+            >
+              Login
+            </Button>
+          </React.Fragment>
+        )}
+
+        <Typography sx={{ minWidth: 100 }}>{user?.name}</Typography>
         <Tooltip title="Account settings">
           <IconButton
             onClick={handleClick}
@@ -33,7 +89,7 @@ export default function AccountMenu() {
             aria-haspopup="true"
             aria-expanded={open ? "true" : undefined}
           >
-            <Avatar sx={{ width: 32, height: 32 }}>M</Avatar>
+            <Avatar src={user?.profilePicture} sx={{ width: 32, height: 32 }} />
           </IconButton>
         </Tooltip>
       </Box>
@@ -42,7 +98,6 @@ export default function AccountMenu() {
         id="account-menu"
         open={open}
         onClose={handleClose}
-        onClick={handleClose}
         slotProps={{
           paper: {
             elevation: 0,
@@ -87,7 +142,7 @@ export default function AccountMenu() {
           </ListItemIcon>
           Settings
         </MenuItem>
-        <MenuItem onClick={handleClose}>
+        <MenuItem onClick={handleLogout}>
           <ListItemIcon>
             <Logout fontSize="small" />
           </ListItemIcon>
